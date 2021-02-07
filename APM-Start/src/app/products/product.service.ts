@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-import {BehaviorSubject, combineLatest, merge, Observable, Subject, throwError} from 'rxjs';
-import {catchError, tap, map, scan, shareReplay} from 'rxjs/operators';
+import {BehaviorSubject, combineLatest, from, merge, Observable, Subject, throwError} from 'rxjs';
+import {catchError, tap, map, scan, shareReplay, mergeMap, toArray, filter, switchMap} from 'rxjs/operators';
 
 import { Product } from './product';
 import { Supplier } from '../suppliers/supplier';
@@ -63,14 +63,25 @@ export class ProductService {
       catchError(this.handleError)
     );
 
-  selectedProductSuppliers$ = combineLatest([
-    this.selectedProduct$,
-    this.supplierService.suppliers$
-  ])
+  // selectedProductSuppliers$ = combineLatest([
+  //   this.selectedProduct$,
+  //   this.supplierService.suppliers$
+  // ])
+  //   .pipe(
+  //     map(([selectedProduct, suppliers]) =>
+  //       suppliers.filter(supplier => selectedProduct.supplierIds.includes(supplier.id))
+  //     ));
+
+  selectedProductSuppliers$ = this.selectedProduct$
     .pipe(
-      map(([selectedProduct, suppliers]) =>
-        suppliers.filter(supplier => selectedProduct.supplierIds.includes(supplier.id))
-      ));
+      filter(selectedProduct => Boolean(selectedProduct)),
+      switchMap(selectedProduct =>
+        from(selectedProduct.supplierIds)
+          .pipe(
+            mergeMap(supplierId => this.http.get<Supplier>(`${this.suppliersUrl}/${supplierId}`)),
+            toArray(),
+            tap(suppliers => console.log('product suppliers', JSON.stringify(suppliers)))
+          )));
 
   // Merge products with new created product. Merge streams and than insert new item into array
   productsWithAdd$ = merge(
