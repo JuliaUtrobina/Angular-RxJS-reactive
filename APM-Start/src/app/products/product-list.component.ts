@@ -14,7 +14,7 @@ export class ProductListComponent {
   categories;
 
   // $ in the name indicates that variable is observable
-  products$ = this.productService.products$
+  products$ = this.productService.productWithCategory$
     .pipe(
       catchError(err => {
         this.errorMessage = err;
