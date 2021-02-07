@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {ProductService} from './product.service';
-import {combineLatest, EMPTY, Subject} from 'rxjs';
+import {BehaviorSubject, combineLatest, EMPTY, Subject} from 'rxjs';
 import {catchError, map, startWith} from 'rxjs/operators';
 import {ProductCategoryService} from '../product-categories/product-category.service';
 
@@ -14,17 +14,13 @@ export class ProductListComponent {
   errorMessage = '';
 
   // Subject is used to combine Action and Data streams
-  private categorySelectedSubject = new Subject<number>();
+  private categorySelectedSubject = new BehaviorSubject<number>(0);
   categorySelectedAction$ = this.categorySelectedSubject.asObservable();
 
   // $ in the name indicates that variable is observable
   products$ = combineLatest([
     this.productService.productWithCategory$,
     this.categorySelectedAction$
-      // To use initial value add 0 to the stream
-      .pipe(
-        startWith(0)
-      )
   ])
     .pipe(
       map(([products, selectedCategoryId]) =>
