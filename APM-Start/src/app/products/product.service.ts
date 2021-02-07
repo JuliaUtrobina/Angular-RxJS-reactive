@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-import {combineLatest, Observable, throwError} from 'rxjs';
+import {BehaviorSubject, combineLatest, Observable, throwError} from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
 
 import { Product } from './product';
@@ -39,6 +39,28 @@ export class ProductService {
       }) as Product)
     ),
   );
+
+  // Subject is used to combine Action and Data streams
+  private productSelectionSubject = new BehaviorSubject<number>(0);
+  productSelectedAction$ = this.productSelectionSubject.asObservable();
+
+  selectedProduct$ = combineLatest([
+    this.productWithCategory$,
+    this.productSelectedAction$
+  ])
+    .pipe(
+      map(([products, selectedProductId]) =>
+        // Find product in products array from data stream which matches selected Product id from action stream
+        products.find(product => product.id === selectedProductId)
+      ),
+      tap(data => console.log('Products: ', JSON.stringify(data))),
+      catchError(this.handleError)
+    );
+
+  selectedProductChanged(selectedProduceId: number): void {
+    // Submit selected Id into action stream
+    this.productSelectionSubject.next(+selectedProduceId);
+  }
 
   private fakeProduct(): Product {
     return {

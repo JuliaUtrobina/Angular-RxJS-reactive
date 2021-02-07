@@ -11,7 +11,9 @@ import {ProductCategoryService} from '../product-categories/product-category.ser
 })
 export class ProductListComponent {
   pageTitle = 'Product List';
-  errorMessage = '';
+  // Subject is used to combine Action and Data streams. As we changed changeDetection strategy we should change errorMessage to Subject
+  private errorMessageSubject = new Subject<number>();
+  errorMessage$ = this.errorMessageSubject.asObservable();
 
   // Subject is used to combine Action and Data streams
   private categorySelectedSubject = new BehaviorSubject<number>(0);
@@ -28,7 +30,7 @@ export class ProductListComponent {
           selectedCategoryId ? product.categoryId === selectedCategoryId : true)
       ),
       catchError(err => {
-        this.errorMessage = err;
+        this.errorMessageSubject.next(err);
         return EMPTY;
       })
     );
@@ -36,7 +38,7 @@ export class ProductListComponent {
   categories$ = this.productCategoryService.productCategories$
     .pipe(
       catchError(err => {
-        this.errorMessage = err;
+        this.errorMessageSubject.next(err);
         return EMPTY;
       })
     );
