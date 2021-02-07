@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {ProductService} from './product.service';
-import {EMPTY} from 'rxjs';
-import {catchError, map} from 'rxjs/operators';
+import {combineLatest, EMPTY, Subject} from 'rxjs';
+import {catchError, map, startWith} from 'rxjs/operators';
 import {ProductCategoryService} from '../product-categories/product-category.service';
 
 @Component({
@@ -12,11 +12,25 @@ import {ProductCategoryService} from '../product-categories/product-category.ser
 export class ProductListComponent {
   pageTitle = 'Product List';
   errorMessage = '';
-  selectedCategoryId = 1;
+
+  // Subject is used to combine Action and Data streams
+  private categorySelectedSubject = new Subject<number>();
+  categorySelectedAction$ = this.categorySelectedSubject.asObservable();
 
   // $ in the name indicates that variable is observable
-  products$ = this.productService.productWithCategory$
+  products$ = combineLatest([
+    this.productService.productWithCategory$,
+    this.categorySelectedAction$
+      // To use initial value add 0 to the stream
+      .pipe(
+        startWith(0)
+      )
+  ])
     .pipe(
+      map(([products, selectedCategoryId]) =>
+        products.filter(product =>
+          selectedCategoryId ? product.categoryId === selectedCategoryId : true)
+      ),
       catchError(err => {
         this.errorMessage = err;
         return EMPTY;
@@ -31,14 +45,6 @@ export class ProductListComponent {
       })
     );
 
-  productsSimpleFilter$ = this.productService.productWithCategory$
-    .pipe(
-      map(products =>
-        products.filter(product =>
-          this.selectedCategoryId ? product.categoryId === this.selectedCategoryId : true
-        ))
-    );
-
   constructor(private productService: ProductService,
               private productCategoryService: ProductCategoryService) { }
 
@@ -47,6 +53,7 @@ export class ProductListComponent {
   }
 
   onSelected(categoryId: string): void {
-    this.selectedCategoryId = +categoryId;
+    // Submit selected categoryId into action stream
+    this.categorySelectedSubject.next(+categoryId);
   }
 }
