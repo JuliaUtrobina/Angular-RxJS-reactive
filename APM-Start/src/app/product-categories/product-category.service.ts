@@ -5,7 +5,7 @@ import { throwError, Observable } from 'rxjs';
 
 import { ProductCategory } from './product-category';
 import {Product} from '../products/product';
-import {catchError, map, tap} from 'rxjs/operators';
+import {catchError, map, shareReplay, tap} from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +16,8 @@ export class ProductCategoryService {
   productCategories$ = this.http.get<ProductCategory[]>(this.productCategoriesUrl)
     .pipe(
       tap(data => console.log('categories: ', JSON.stringify(data))),
+      // Cache result with buffer size = 1
+      shareReplay(1),
       catchError(this.handleError)
     );
 

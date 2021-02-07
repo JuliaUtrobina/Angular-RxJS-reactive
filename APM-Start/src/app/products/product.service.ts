@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
 import {BehaviorSubject, combineLatest, merge, Observable, Subject, throwError} from 'rxjs';
-import {catchError, tap, map, scan} from 'rxjs/operators';
+import {catchError, tap, map, scan, shareReplay} from 'rxjs/operators';
 
 import { Product } from './product';
 import { Supplier } from '../suppliers/supplier';
@@ -38,6 +38,8 @@ export class ProductService {
         searchKey: [product.productName]
       }) as Product)
     ),
+    // Cache result with buffer size = 1
+    shareReplay(1),
   );
 
   // Subject is used to combine Action and Data streams
@@ -56,6 +58,8 @@ export class ProductService {
         products.find(product => product.id === selectedProductId)
       ),
       tap(data => console.log('Products: ', JSON.stringify(data))),
+      // Cache result with buffer size = 1
+      shareReplay(1),
       catchError(this.handleError)
     );
 
