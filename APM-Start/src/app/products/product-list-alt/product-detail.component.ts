@@ -1,8 +1,9 @@
 import {ChangeDetectionStrategy, Component} from '@angular/core';
 
 import {ProductService} from '../product.service';
-import {catchError} from 'rxjs/operators';
+import {catchError, map} from 'rxjs/operators';
 import {EMPTY, Subject} from 'rxjs';
+import {Product} from '../product';
 
 @Component({
   selector: 'pm-product-detail',
@@ -10,8 +11,6 @@ import {EMPTY, Subject} from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductDetailComponent {
-  pageTitle = 'Product Detail';
-
   // Subject is used to combine Action and Data streams. As we changed changeDetection strategy we should change errorMessage to Subject
   private errorMessageSubject = new Subject<number>();
   errorMessage$ = this.errorMessageSubject.asObservable();
@@ -22,6 +21,12 @@ export class ProductDetailComponent {
         this.errorMessageSubject.next(err);
         return EMPTY;
       })
+    );
+
+  pageTitle$ = this.product$
+    .pipe(
+      map((p: Product) =>
+        p ? `Product Details for: ${p.productName}` : null)
     );
 
   productSuppliers$ = this.productService.selectedProductSuppliers$
