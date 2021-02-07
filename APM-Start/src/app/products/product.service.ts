@@ -63,6 +63,15 @@ export class ProductService {
       catchError(this.handleError)
     );
 
+  selectedProductSuppliers$ = combineLatest([
+    this.selectedProduct$,
+    this.supplierService.suppliers$
+  ])
+    .pipe(
+      map(([selectedProduct, suppliers]) =>
+        suppliers.filter(supplier => selectedProduct.supplierIds.includes(supplier.id))
+      ));
+
   // Merge products with new created product. Merge streams and than insert new item into array
   productsWithAdd$ = merge(
     this.productWithCategory$,
@@ -94,6 +103,7 @@ export class ProductService {
       quantityInStock: 30
     };
   }
+
 
   private  handleError(err: any): Observable<never> {
     // in a real world app, we may send the server to some remote logging infrastructure
